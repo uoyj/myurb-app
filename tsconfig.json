@@ -1,0 +1,12 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@/*": ["./*"],
+      "@/components/*": ["./components/*"],
+      "@/registry/nativewind/*": ["./registry/nativewind/*"]
+    }
+  },
+  "exclude": ["node_modules"]
+}
