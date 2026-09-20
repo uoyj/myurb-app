@@ -1,0 +1,11 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        # URL da API que o browser vai chamar (inlinada no build)
+        EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://api-urbs.com}
+    container_name: transporte-urbs-web
+    ports:
+      - "8082:80"      
+    restart: unless-stopped
