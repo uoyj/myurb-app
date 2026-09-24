@@ -8,5 +8,5 @@
       "@/registry/nativewind/*": ["./registry/nativewind/*"]
     }
   },
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist", "dist-dev", "dist-prod"]
 }

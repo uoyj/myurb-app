@@ -27,6 +27,24 @@ export interface HorarioItem {
   [key: string]: any;
 }
 
+export interface TrajetoProperties {
+  codigo: string;
+  nome: string;
+  cor: string;
+  origem: string;
+  destino: string;
+  data_referencia: string;
+}
+
+export interface TrajetoFeature {
+  type: 'Feature';
+  geometry: {
+    type: 'MultiLineString';
+    coordinates: [number, number][][];
+  };
+  properties: TrajetoProperties;
+}
+
 class LinhaService {
   private baseUrl: string;
 
@@ -70,6 +88,17 @@ class LinhaService {
     }
     const data = await response.json();
     return Array.isArray(data) ? data : data.horarios || data.data || [];
+  }
+
+  async getTrajeto(codigo: string): Promise<TrajetoFeature | null> {
+    const response = await fetch(`${this.baseUrl}/linhas/${codigo}/trajeto`);
+    if (response.status === 404) {
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error(`Erro ${response.status}: ${response.statusText}`);
+    }
+    return response.json();
   }
 }
 

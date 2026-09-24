@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { View, ActivityIndicator, Text, TouchableOpacity, Platform } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -8,7 +8,7 @@ import { Text as TextUI } from '@/registry/nativewind/components/ui/text';
 import { Card, CardContent, CardTitle } from '@/registry/nativewind/components/ui/card';
 import { Badge } from '@/registry/nativewind/components/ui/badge';
 import { Button } from '@/registry/nativewind/components/ui/button';
-import { linhaService, Linha, Ponto, HorarioItem } from '@/services/linhas';
+import { linhaService, Linha, Ponto, HorarioItem, TrajetoFeature } from '@/services/linhas';
 
 // Platform-specific auto-import: Metro resolver picks .native.tsx or .web.tsx
 import MapaLinha from '@/components/MapaLinha';
@@ -61,6 +61,26 @@ export default function LinhaDetailScreen() {
     staleTime: 5 * 60 * 1000,
     enabled: !!pontoSelecionado?.codigo,
   });
+
+  const {
+    data: trajeto,
+    isError: isErrorTrajeto,
+    error: errorTrajeto,
+  } = useQuery<TrajetoFeature | null>({
+    queryKey: ['trajeto', codigo],
+    queryFn: () => linhaService.getTrajeto(String(codigo)),
+    staleTime: 24 * 60 * 60 * 1000,
+    refetchOnMount: false,
+    retry: 1,
+    enabled: !!codigo,
+  });
+
+  // Erro no trajeto é melhoria; não quebra a tela
+  useEffect(() => {
+    if (isErrorTrajeto && errorTrajeto) {
+      console.warn('Erro ao carregar trajeto:', errorTrajeto);
+    }
+  }, [isErrorTrajeto, errorTrajeto]);
 
   const handleMarcadorPress = (ponto: Ponto) => {
     setPontoSelecionado(ponto);
@@ -151,6 +171,7 @@ export default function LinhaDetailScreen() {
             pontos={pontosData}
             linhaCor={linhaCor}
             onMarcadorPress={handleMarcadorPress}
+            trajeto={trajeto}
           />
         ) : (
           <View className="flex-1 items-center justify-center">

@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from 'react-leaflet';
 // CSS import via link tag in HTML is needed for Leaflet on web
 // O import estático 'leaflet/dist/leaflet.css' não funciona com o bundler do Expo
 typeof document !== 'undefined' && document.querySelector('#leaflet-css') === null && (() => {
@@ -10,7 +10,7 @@ typeof document !== 'undefined' && document.querySelector('#leaflet-css') === nu
   link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
   document.head.appendChild(link);
 })();
-import { Ponto } from '@/services/linhas';
+import { Ponto, TrajetoFeature } from '@/services/linhas';
 import L from 'leaflet';
 
 // Fix for default marker icons in Leaflet
@@ -25,6 +25,7 @@ interface MapaLinhaProps {
   pontos: Ponto[];
   linhaCor: string;
   onMarcadorPress: (ponto: Ponto) => void;
+  trajeto?: TrajetoFeature | null;
 }
 
 // Custom icon with line color
@@ -48,27 +49,40 @@ function createCustomIcon(color: string) {
 }
 
 // Component to handle map interactions and fit bounds
-function MapController({ pontos }: { pontos: Ponto[] }) {
+function MapController({ pontos, trajeto }: { pontos: Ponto[]; trajeto?: TrajetoFeature | null }) {
   const map = useMapEvents({});
 
   useEffect(() => {
-    if (pontos && pontos.length > 0 && map) {
-      const bounds = L.latLngBounds(
+    if (!map) return;
+
+    let bounds: L.LatLngBounds | null = null;
+
+    if (trajeto?.geometry?.coordinates?.length) {
+      const latLngs: L.LatLngExpression[] = [];
+      trajeto.geometry.coordinates.forEach((segmento) => {
+        segmento.forEach(([lng, lat]) => {
+          latLngs.push([lat, lng]);
+        });
+      });
+      bounds = L.latLngBounds(latLngs);
+    } else if (pontos && pontos.length > 0) {
+      bounds = L.latLngBounds(
         pontos.map((p) => ({
           lat: p.latitude,
           lng: p.longitude,
         }))
       );
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [50, 50] });
-      }
     }
-  }, [pontos, map]);
+
+    if (bounds && bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [pontos, trajeto, map]);
 
   return null;
 }
 
-const MapaLinhaWeb = ({ pontos, linhaCor, onMarcadorPress }: MapaLinhaProps) => {
+const MapaLinhaWeb = ({ pontos, linhaCor, onMarcadorPress, trajeto }: MapaLinhaProps) => {
   const customIcon = useMemo(() => createCustomIcon(linhaCor), [linhaCor]);
 
   if (!pontos || pontos.length === 0) {
@@ -93,11 +107,18 @@ const MapaLinhaWeb = ({ pontos, linhaCor, onMarcadorPress }: MapaLinhaProps) => 
         style={{ height: '100%', width: '100%' }}
         key={`map-${pontos.length}`}
       >
-        <MapController pontos={pontos} />
+        <MapController pontos={pontos} trajeto={trajeto} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
         />
+        {trajeto?.geometry?.coordinates?.map((segmento, idx) => (
+          <Polyline
+            key={`trajeto-${idx}`}
+            positions={segmento.map(([lng, lat]) => [lat, lng])}
+            pathOptions={{ color: linhaCor, weight: 4, opacity: 0.9 }}
+          />
+        ))}
         {pontos.map((ponto) => (
           <Marker
             key={ponto.codigo}
