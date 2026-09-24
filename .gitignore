@@ -1,9 +1,45 @@
 # Dependencies
-node_modules
+node_modules/
 
 # Expo
-.expo
-.expo-shared
-web-build
-dist
+.expo/
+.expo-shared/
+web-build/
+dist/
+
+# Env — nunca versionar segredos/config local
 .env
+.env.local
+.env.*.local
+# manter o exemplo versionado
+!.env.example
+
+# Agentes/editores locais
+.claude/
+.vscode/
+.idea/
+*.swp
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# TypeScript / build
+*.tsbuildinfo
+.metro-health-check*
+
+# Prebuild nativo (Expo CNG — gerado, nao versionar)
+android/
+ios/
+
+# Android / iOS builds (caso prebuild local)
+android/app/build/
+ios/build/
+*.keystore
+!debug.keystore
