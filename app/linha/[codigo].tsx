@@ -5,10 +5,9 @@ import { useQuery } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { Text as TextUI } from '@/registry/nativewind/components/ui/text';
-import { Card, CardContent, CardTitle } from '@/registry/nativewind/components/ui/card';
 import { Badge } from '@/registry/nativewind/components/ui/badge';
-import { Button } from '@/registry/nativewind/components/ui/button';
 import { linhaService, Linha, Ponto, HorarioItem, TrajetoFeature } from '@/services/linhas';
+import Svg, { Path } from 'react-native-svg';
 
 // Platform-specific auto-import: Metro resolver picks .native.tsx or .web.tsx
 import MapaLinha from '@/components/MapaLinha';
@@ -87,8 +86,8 @@ export default function LinhaDetailScreen() {
     bottomSheetRef.current?.expand();
   };
 
-  const closeBottomSheet = () => {
-    bottomSheetRef.current?.close();
+  const handleSheetClose = () => {
+    setPontoSelecionado(null);   // reseta o ponto selecionado quando a sheet fecha
   };
 
   const horariosAgrupados = useMemo(() => {
@@ -139,6 +138,28 @@ export default function LinhaDetailScreen() {
   const linhaCor = linha.cor || '#3b82f6';
   const pontosData = pontos || [];
 
+  function IconeVoltar({ color, size = 24 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 18l-6-6 6-6"
+        stroke={color}
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+const handleVoltar = () => {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    router.replace('/linhas');
+  }
+};
+
   return (
     <View className="flex-1 bg-background">
       <StatusBar style="dark" />
@@ -151,8 +172,18 @@ export default function LinhaDetailScreen() {
 
       {/* Header with line info */}
       <View className="p-4 bg-card border-b border-border">
-        <View className="flex flex-row items-center justify-between">
-          <TextUI variant="h3">{linha.codigo} - {linha.nome}</TextUI>
+        <View className="flex flex-row items-center">
+          <TouchableOpacity
+            onPress={handleVoltar}
+            className="mr-3 -ml-1 p-1"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel="Voltar"
+          >
+            <IconeVoltar color={linhaCor} />
+          </TouchableOpacity>
+          <View className="flex-1">
+            <TextUI variant="h3" numberOfLines={1}>{linha.codigo} - {linha.nome}</TextUI>
+          </View>
           <Badge variant="default" style={{ backgroundColor: linhaCor }}>
             <TextUI className="text-white">{linhaCor}</TextUI>
           </Badge>
@@ -186,7 +217,7 @@ export default function LinhaDetailScreen() {
         index={0}
         snapPoints={snapPoints}
         enablePanDownToClose={true}
-        onDismiss={closeBottomSheet}
+        onClose={handleSheetClose}
         handleStyle={{ backgroundColor: linhaCor }}
         handleIndicatorStyle={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
         backgroundStyle={{ backgroundColor: 'white' }}
